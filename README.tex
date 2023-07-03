@@ -1,0 +1,595 @@
+% Created 2023-07-03 lun 17:01
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{proof}
+\usepackage{mathtools}
+\newcommand{\Lang}{\ensuremath{\mathcal{L}}}
+\newcommand{\fn}[2]{\ensuremath{\text{fn}\; #1 \; . \; #2}}
+\newcommand{\ifc}[3]{\ensuremath{\text{if } #1 \text{ then } #2 \text{ else } #3}}
+\newcommand{\app}[2]{\ensuremath{ #1 \; #2}}
+\newcommand{\fv}[1]{\ensuremath{\text{fv}\left( #1 \right)}}
+\newcommand{\true}{\ensuremath{\mbox{true}}}
+\newcommand{\false}{\ensuremath{\mbox{false}}}
+\newcommand{\Bool}{\ensuremath{\mbox{Bool}}}
+\newcommand{\Nat}{\ensuremath{\mbox{Nat}}}
+\newcommand{\unit}{\ensuremath{\mbox{unit}}}
+\newcommand{\Unit}{\ensuremath{\mbox{Unit}}}
+\newcommand{\inferr}[3]{\ensuremath{\infer[\text{\small{(#1)}}]{#2}{#3}}}
+\newcommand{\subs}[2]{\ensuremath{\{ #1 := #2 \}}}
+\newcommand{\type}[2]{\ensuremath{ #1 : #2 }}
+\newcommand{\Dom}{\ensuremath{\mbox{Dom}}}
+\newcommand{\pair}[2]{\ensuremath{( #1 , #2 )}}
+\newcommand{\fst}[1]{\ensuremath{ #1 . \__1}}
+\newcommand{\snd}[1]{\ensuremath{ #1 . \__2}}
+\newcommand{\rec}[1]{\ensuremath{ \{ #1 \} }}
+\newcommand{\sel}[2]{\ensuremath{ #1 . #2 }}
+\newcommand{\var}[1]{\ensuremath{ \langle #1 \rangle }}
+\newcommand{\match}[2]{\ensuremath{ #1 \texttt{ match }\{ #2 \} }}
+\newcommand{\case}[3]{\ensuremath{ \texttt{case } #1 = #2 \Rightarrow #3}}
+\newcommand{\subt}[2]{\ensuremath{ #1 <: #2 }}
+\newcommand{\throw}[1]{\ensuremath{\texttt{throw } #1}}
+\newcommand{\tc}[2]{\ensuremath{\texttt{try } #1 \texttt{ catch } #2}}
+\let\emptyset\varnothing
+\author{Luca Zaninotto -- 2057074}
+\date{\today}
+\title{ATPL Language and rules}
+\hypersetup{
+ pdfauthor={Luca Zaninotto -- 2057074},
+ pdftitle={ATPL Language and rules},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 28.2 (Org mode 9.5.5)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\section*{Language}
+\label{sec:org80f7a7a}
+\(\Lang\) language is inductively defined by means of the following
+grammar:
+
+\begin{center}
+\begin{tabular}{rcll}
+Terms \(M\) & \(::=\) & \(x\) & variables\\
+ & \(\mid\) & \(n \mid\) true \(\mid\) false & integer and boolean constants\\
+ & \(\mid\) & \(M + M\) & addition operation\\
+ & \(\mid\) & if \(M\) then \(M\) else \(M\) & conditional operation\\
+ & \(\mid\) & \(\fn{x}{M}\) & function declaration\\
+ & \(\mid\) & \(\app{M}{M}\) & function application\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Free variables}
+\label{sec:org8728f7c}
+Given a term \(M\), the set of free variables of \(M\) written
+\(\fv{M}\)are inductively defined as follows:
+
+\begin{center}
+\begin{tabular}{rcl}
+\(\fv{x}\) & = & \(\{x\}\)\\
+\(\fv{n} = \fv{\false} = \fv{true}\) & = & \(\emptyset\)\\
+\(\fv{M + N}\) & = & \(\fv{M} \cup \fv{N}\)\\
+\(\fv{\ifc{M_1}{M_2}{M_3}}\) & = & \(\fv{M_1} \cup \fv{M_2} \cup \fv{M_3}\)\\
+\(\fv{\fn{x}{M}}\) & = & \(\fv{M} \setminus \{x\}\)\\
+\(\fv{\app{M}{N}}\) & = & \(\fv{M}\cup\fv{N}\)\\
+\end{tabular}
+
+\end{center}
+
+\section*{Operational Semantics}
+\label{sec:org39a16a6}
+Defines the smallest binary relation between the terms of \(\Lang\)
+that satisfies the following axioms and inference rules
+\subsection*{Values}
+\label{sec:org9c2b509}
+Subset of term corresponding to the possible final states of the
+computation, i.e.the results of the program evaluation/execution.
+\begin{center}
+\begin{tabular}{rcll}
+Values \(v\) & \(::=\) & \(n \mid\) true \(\mid\) false & integer and boolean constat\\
+ & \(\mid\) & \(\fn{x}{M}\) & function declaration\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Axioms}
+\label{sec:orgccb51ad}
+\begin{center}
+\begin{tabular}{l}
+\(\inferr{SUM}{n_1 + n_2 \to n}{}\)\\
+\\
+\(\inferr{IF-TRUE}{\ifc{\true}{M}{N} \to M}{}\)\\
+\\
+\(\inferr{IF-FALSE}{\ifc{\false}{M}{N} \to N}{}\)\\
+\\
+\(\inferr{BETA}{\app{(\fn{x}{M})}{v} \to M\subs{x}{v}}{}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Rules}
+\label{sec:orgd0a06e1}
+\begin{center}
+\begin{tabular}{l}
+\(\inferr{IF}{\ifc{M_1}{M_2}{M_3} \to \ifc{M_1'}{M_2}{M_3}}{M_1 \to M_1'}\)\\
+\\
+\(\inferr{SUM LEFT}{M + N \to M' + N}{M \to M'}\)\\
+\\
+\(\inferr{SUM RIGHT}{v + M \to v + M'}{M \to M'}\)\\
+\\
+\(\inferr{APP 1}{\app{M}{N} \to \app{M'}{N}}{M \to M'}\)\\
+\\
+\(\inferr{APP 2}{\app{v}{M} \to \app{v}{M'}}{M \to M'}\)\\
+\end{tabular}
+
+\end{center}
+
+App 1, App 2 e Beta, tutte assieme impostano la convenzione
+call-by-value, dove prima di eseguire una funzione su dei
+parametri, questi vengono valutati, producendo eventualmente stuck
+term \emph{prima} della chiamata a funzione
+\section*{Typing}
+\label{sec:orgdbd310c}
+Types are needed to \emph{classify} values, which in the language are
+constants, integers, booleans and functions:
+\begin{center}
+\begin{tabular}{rcll}
+Types \(T\) & \(::=\) & Bool & type of boolean values\\
+ & \(\mid\) & Nat & type of integer values\\
+ & \(\mid\) & \(T\to T\) & type of functions\\
+\end{tabular}
+
+\end{center}
+\subsection*{Axioms}
+\label{sec:orgdd0e9dd}
+\begin{center}
+\begin{tabular}{cc}
+\(\inferr{T-TRUE}{\Gamma\vdash\type{\true}{\Bool}}{}\) & \(\inferr{T-FALSE}{\Gamma\vdash\type{\true}{\Bool}}{}\)\\
+ & \\
+\(\inferr{T-INT}{\Gamma\vdash\type{n}{\Nat}}{}\) & \(\inferr{T-VAR}{\Gamma\vdash\type{x}{T}}{}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Rules}
+\label{sec:orge75cab7}
+\begin{center}
+\begin{tabular}{c}
+\(\inferr{T-SUM}{\Gamma\vdash\type{(M+N)}{\Nat}}{\Gamma\vdash\type{M}{\Nat} & \Gamma\vdash\type{N}{\Nat}}\)\\
+\\
+\(\inferr{T-IFTHENELSE}{\Gamma\vdash\type{\ifc{M_1}{M_2}{M_3}}{T}}{\Gamma\vdash\type{M_1}{\Bool} & \Gamma\vdash\type{M_2}{T} & \Gamma\vdash\type{M_3}{T}}\)\\
+\\
+\(\inferr{T-FUN}{\Gamma\vdash\type{\fn{\type{x}{T_1}}{M}}{T_1 \to T_2}}{\Gamma, \type{x}{T_1}\vdash \type{M}{T_2}}\)\\
+\\
+\(\inferr{T-APP}{\Gamma\vdash\type{\app{M}{N}}{T_2}}{\Gamma\vdash\type{M}{T_1 \to T_2} & \Gamma\vdash\type{N}{T_1}}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Lemmas}
+\label{sec:org8ff9e13}
+
+\subsubsection*{Inversion lemma(s)}
+\label{sec:org55ea69b}
+\begin{enumerate}
+\item If \(\Gamma\vdash\type{\true}{T}\) is derivable, then \(T = \Bool\)
+\item If \(\Gamma\vdash\type{\false}{T}\) is derivable, then \(T = \Bool\)
+\item If \(\Gamma\vdash\type{n}{T}\) is derivable, then \(T = \Nat\)
+\item If \(\Gamma\vdash\type{M+N}{T}\) is derivable, then \(T = \Nat\) and \(\Gamma \vdash \type{M}{\Nat}\),
+\(\Gamma\vdash\type{N}{\Nat}\) are derivable.
+\item If \(\Gamma\vdash\type{\ifc{M_1}{M_2}{M_3}}{T}\) is derivable,
+then \(\Gamma\vdash\type{M_1}{\Bool}\),
+\(\Gamma\vdash\type{M_2}{T}\), \(\Gamma\vdash\type{M_3}{T}\)
+are derivable judgments
+\item If \(\Gamma\vdash\type{x}{T}\) is derivable, then \(\type{x}{T}
+       \in \Gamma\)
+\item If \(\Gamma\vdash\type{\fn{\type{x}{T_1}}{M}}{T}\) is
+derivable, then \(\exists T_2\) s.t. \(T = T_1 \to T_2\) and
+\(\Gamma, \type{x}{T_1}\vdash \type{M}{T_2}\) is a derivable
+judgment.
+\item If \(\Gamma\vdash\type{\app{M}{N}}{T}\) is derivable, then
+\(\exists T_1\) s.t. \(\Gamma\vdash\type{M}{T_1\to T_2}\) and
+\(\Gamma\vdash\type{N}{T_1}\) are derivable judgments.
+\item If \(\Gamma\vdash \type{\unit}{T}\) then \(T = \Unit\)
+\item If \(\Gamma\vdash \type{\pair{M_1}{M_2}}{T}\) is derivable,
+then \(\exists T_1, T_2 \mid \Gamma\vdash \type{M_1}{T_1}
+        \quad \Gamma\vdash \type{M_2}{T_2}\) are derivable.
+\item If \(\Gamma\vdash \type{\fst{M}}{T}\) is derivable, then
+\(\exists T_1 \mid \Gamma\vdash \type{M}{T * T_1}\) is
+derivable.
+\item If \(\Gamma\vdash \type{\snd{M}}{T}\) is derivable, then
+\(\exists T_1 \mid \Gamma\vdash \type{M}{T_1 * T}\) is
+derivable.
+\item If \(\Gamma\vdash \type{\rec{\ell_i = M_i \quad^{i\in 1\dots
+        n}}} {T}\) is derivable, then \(\forall i \in 1 \dots n \quad
+        \exists T_i \mid \Gamma\vdash \type{M_i}{T_i}\) and \(T =
+        \rec{\type{\ell_i}{T_i}\quad^{i \in 1\dots n}}\)
+\item If \(\Gamma\vdash \type{\sel{M}{\ell_j}}{T}\) is derivable,
+then \(\exists n \mid \forall i \in 1\dots n\quad \exists
+        \ell_i, T_i \mid \Gamma\vdash \type{M}{\rec{\type{\ell_i}{T_i}
+        \quad^{i \in 1\dots n}}}\) and \(T = T_j\).
+\end{enumerate}
+
+\begin{itemize}
+\item Inversion lemma with subtyping
+\label{sec:org315bd31}
+We have to add
+\begin{enumerate}
+\item If \(\Gamma \vdash \type{x}{T}\) then \(\exists x \mid
+        \type{x}{S}\) and \(\subt{S}{T}\)
+\item If \(\Gamma\vdash\type{\fn{\type{x}{S_1}}{M}}{T}\) is
+derivable, then \(\exists T_1, T_2 \mid T = T_1 \to T_2\) with
+\(\subt{T_1}{S_1}\) and \(\Gamma,\type{x}{S_1}\vdash
+        \type{M}{T_2}\) is derivable
+\item If \(\Gamma\vdash\type{\rec{\ell_i = M_i \;^{i\in 1\dots
+        n}}}{T}\)is derivable, then \(\exists S_1,\dots,S_n \mid
+        \Gamma\vdash \type{M_i}{S_i}\) is derivable for each \(i\in
+        1\dots n\) and \(\type{\rec{\type{\ell_i}{S_i}\;^{i\in 1 \dots
+        n}}}{T}\)
+\item If \(\subt{S}{T_1 \to T_2}\) then \(\exists S_1, S_2\)
+s.t. \(S = S_1 \to S_2\) with \(\subt{T_1}{S_1},
+        \subt{S_2}{T_2}\)
+\item If \(\subt{S_1\to S_2}{T}\) then \(\exists T_1, T_2\) s.t. \(T
+        = T_1 \to T_2\) with \(\subt{T_1}{S_1}, \subt{S_2}{T_2}\)
+\item If \(\subt{S}{\rec{\type{\ell_i}{T_i}\;^{i\in I}}}\) then
+\(S=\rec{\type{\ell_i}{S_i}\;^{i\in I \cup I'}}\) with
+\(\subt{S_i}{T_i}\) for all \(i \in I\)
+\item If \(\subt{\rec{\type{\ell_i}{S_i}\;^{i\in I}}}{T}\) then
+\(T=\rec{\type{\ell_i}{T_i}\;^{i\in I'}}\) with \(I\subseteq
+        I'\) and \(\subt{S_i}{T_i}\) for all \(i \in I\)
+\end{enumerate}
+\end{itemize}
+
+\subsubsection*{Canonical form lemma(s)}
+\label{sec:org4b40b87}
+\begin{enumerate}
+\item if \(v\) is a value and \(\emptyset \vdash \type{v}{\Bool}\)
+then \(v\) is either \texttt{true} or \texttt{false}.
+\item if \(v\) is a value and \(\emptyset \vdash \type{v}{\Nat}\)
+then \(v\) is an integer constant \(n\).
+\item if \(v\) is a value and \(\emptyset \vdash \type{v}{T_1 \to
+       T_2}\) then \(v\) is \(\fn{\type{x}{T_1}}{M}\).
+\item if \(v\) is a value and \(\emptyset \vdash \type{v}{\Unit}\) then
+\(v\) is the \(\unit\) value.
+\item if \(v\) is a value and \(\emptyset \vdash \type{v}{T_1 * T_2}\)
+then \(v\) is in the shape \(\pair{v_1}{v_2}\).
+\item if \(v\) is a value and \(\emptyset \vdash
+       \type{v}{\rec{\type{\ell_i}{T_i}\quad^{i\in 1 \dots n}}}\) then
+\(v\) is in the shape \(\rec{\ell_i = v_i\quad^{i\in 1 \dots
+       n}}\).
+\item if \(v\) is a value and \(\emptyset \vdash
+       \type{v}{\var{\type{\ell_i}{T_i}\quad^{i\in 1 \dots n}}}\) then
+\(v\) is in the shape \(\var{\ell_i = v_i}\) with \(i\in 1\dots
+       n\).
+\end{enumerate}
+
+\subsubsection*{Permutation lemma}
+\label{sec:org63792d8}
+If \(\Gamma\vdash\type{M}{T}\) is a derivable judgment, and
+\(\Delta\) is a permutation of \(\Gamma\), then
+\(\Delta\vdash\type{M}{T}\) is derivable with proof tree of the
+same height.
+
+The proof works by induction on the height of \(\Gamma\vdash
+    \type{M}{T}\).
+
+\subsubsection*{Weakening lemma}
+\label{sec:org4aeecbd}
+If \(\Gamma\vdash\type{M}{T}\) is a derivable judgment and \(x
+    \not\in \Dom (\Gamma)\), then
+\(\Gamma,\type{x}{S}\vdash\type{M}{T}\)
+
+The proof works by induction on the height of \(\Gamma\vdash
+    \type{M}{T}\).
+
+\subsubsection*{Substitution lemma}
+\label{sec:orgdf4cee5}
+If \(\Gamma,\type{x}{S}\vdash\type{M}{T}\) and
+\(\Gamma\vdash\type{N}{S}\), then \(\Gamma \vdash \type{M
+    \subs{x}{N}}{T}\)
+
+The proof works by induction on the height of \(\Gamma,
+    \type{x}{S}\vdash \type{M}{T}\).
+
+\subsection*{Theorems}
+\label{sec:org928ed05}
+
+\subsubsection*{Progress theorem}
+\label{sec:orgb234843}
+Let \(M\) be a closed and well-typed term, i.e. \(\emptyset
+    \vdash\type{M}{T}\), then either \(M\) is a value or \(\exists M'\)
+s.t. \(M\to M'\).
+
+The proof works by induction on the height of \(\Gamma\vdash
+    \type{M}{T}\).
+
+\subsubsection*{Subject Reduction or Type Preservation}
+\label{sec:org82b4c71}
+If \(\Gamma\vdash\type{M}{T}\) and \(M\to M'\), then \(\Gamma
+    \vdash \type{M'}{T}\)
+
+The proof works by induction on the height of \(M\to M'\).
+
+\begin{itemize}
+\item \textbf{Corollary}:
+\label{sec:org335b7ab}
+If \(\emptyset\vdash\type{M}{T}\) and \(M \to^* M'\), then
+\(\emptyset\vdash\type{M'}{T}\)
+\end{itemize}
+
+\subsubsection*{Safety}
+\label{sec:org7c73e2e}
+If \(M\) is a closed and well-typed term, then it does not reduce
+to a stuck term. That is, let \(M\) be s.t. \(\emptyset \vdash
+    \type{M}{T}\) and \(M\to* M'\) s.t. \(M'\not\to\), then \(M'\) is
+a value
+
+The proof just works because of the latter theorems.
+
+\section*{Extensions}
+\label{sec:org2127e27}
+\subsection*{Unit type}
+\label{sec:org202fb69}
+\begin{center}
+\begin{tabular}{llll}
+M := \(\dots \mid\) unit & \(v := \dots \mid\) unit & \(T := \dots \mid\) Unit & \(\inferr{T-UNIT}{\Gamma \vdash \type{\unit}{\Unit}}{}\)\\
+\end{tabular}
+
+\end{center}
+
+Thanks to the unit type, we can introduce syntactic sugar
+\(M_1;M_2\), which expands to
+\(\app{(\fn{\type{x}{\Unit}}{M_2})}{M_1}\) with \(x\) fresh,
+i.e. \(x\not\in fv(M_2)\)
+
+We can also optionally introduce the following derivation rules to
+concatenate terms with the new construct:
+
+\begin{center}
+\begin{tabular}{ll}
+\(\inferr{SEQ}{M_1;M_2 \to M_1';M_2}{M_1 \to M_1'}\) & \(\inferr{SEQ-NEXT}{\unit;M \to M}{}\)\\
+\end{tabular}
+
+\end{center}
+
+\[\inferr{T-SEQ}{\Gamma \vdash \type{M_1;M_2}{T}}{\Gamma \vdash
+   \type{M_1}{\Unit} & \Gamma \vdash \type{M_2}{T}}\]
+
+\subsection*{Pairs}
+\label{sec:orgbc591ad}
+\begin{center}
+\begin{tabular}{lcr}
+\(M\) & := & \(\dots \mid \pair{M_1}{M_2} \mid \fst{M_1} \mid \snd{M_1}\)\\
+\end{tabular}
+
+\end{center}
+
+Pairs have a new \emph{product type}: \(T_1 * T_2\), and pairs values
+are in the shape \(v_1, v_2\).
+
+\subsubsection*{Axioms}
+\label{sec:org5c64e1b}
+
+\begin{center}
+\begin{tabular}{ll}
+\(\inferr{PAIR-1}{\fst{\pair{v_1}{v_2}} \to v_1}{}\) & \(\inferr{PAIR-2}{\snd{\pair{v_1}{v_2}} \to v_2}{}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Rules}
+\label{sec:orgd9ba473}
+
+\begin{center}
+\begin{tabular}{ll}
+\(\inferr{PROJECT-1}{\fst{M} \to \fst{M'}}{M \to M'}\) & \(\inferr{PROJECT-2}{\snd{M} \to \snd{M'}}{M \to M'}\)\\
+ & \\
+\(\inferr{EVAL-PAIR-1}{\pair{M_1}{M_2} \to \pair{M_1'}{M_2}}{M_1 \to M_1'}\) & \(\inferr{EVAL-PAIR-2}{\pair{v}{M_2} \to \pair{v}{M_2'}}{M_2 \to M_2'}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Typing rules}
+\label{sec:orgeab0869}
+
+\[\inferr{T-PAIR}{\Gamma\vdash\type{\pair{M_1}{M_2}}{T_1 *
+    T_2}}{\Gamma\vdash\type{M_1}{T_1} & \Gamma\vdash \type{M_2}{T_2}}\]
+
+\begin{center}
+\begin{tabular}{ll}
+\(\inferr{T-PROJECT-1}{\Gamma \vdash \type{\fst{M}}{T_1}}{\Gamma\vdash\type{M}{T_1 * T_2}}\) & \(\inferr{T-PROJECT-2}{\Gamma \vdash \type{\snd{M}}{T_2}}{\Gamma\vdash\type{M}{T_1 * T_2}}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsection*{Records}
+\label{sec:org1e79f67}
+
+\begin{center}
+\begin{tabular}{lcl}
+\(M\) & ::= & \(\dots \mid \rec{\ell_i = M_i ^{i \in 1..n}}\)\\
+ &  & \\
+\(v\) & ::= & \(\dots \mid \rec{\ell_i = v_i ^{i \in 1..n}}\)\\
+ &  & \\
+\(T\) & ::= & \(\dots \mid \rec{\ell_i : T_i ^{i \in 1..n}}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Axioms}
+\label{sec:org724ab5d}
+\[\inferr{SELECT}{\sel{\rec{\ell_i = v_i \quad^{i \in
+    1..n}}}{\ell_j} \to v_j}{j\in 1..n}\]
+
+\subsubsection*{Rules}
+\label{sec:org3432229}
+\begin{center}
+\begin{tabular}{l}
+\(\infer[\text{(EVAL-SELECT) }]{\sel{M}{\ell} \to \sel{M'}{\ell}} {M\to M'}\)\\
+\\
+(EVAL RECORD)\\
+\(\infer{\rec{\ell_i = v_i ^{i\in 1\dots j-1}, \ell_j = M_j, \ell_k = M_k^{k \in j+1 \dots n}} \to \rec{\ell_i = v_i ^{i\in 1\dots j-1}, \ell_j = M_j', \ell_k = M_k^{k \in j+1 \dots n}}}{M_j \to M_j'}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Typing rules}
+\label{sec:orgc5c1e22}
+\begin{center}
+\begin{tabular}{ll}
+(T-RECORD) & (T-SELECT)\\
+ & \\
+\(\infer{\Gamma\vdash\type{\rec{\ell_i = M_i\quad ^{i\in 1 .. n}}}{\rec{\type{\ell_i}{T_i}\quad^{i\in 1..n}}}}{\forall i \in 1 .. n \quad \Gamma \vdash M_i : T_i}\) & \(\infer{\Gamma\vdash \type{M.\ell_j}{T_j}}{\Gamma\vdash \type{M}{\rec{\type{\ell_i}{T_i}\quad^{i \in 1..n}}}}\)\\
+\end{tabular}
+
+\end{center}
+
+with \(j \in \{1, \dots, n\}\)
+
+\subsection*{Variant types}
+\label{sec:orgacb4f53}
+\begin{center}
+\begin{tabular}{lcl}
+\(M\) & ::= & \(\dots \mid \var{\ell = M}\)\\
+ &  & \\
+\(v\) & ::= & \(\dots \mid \var{\ell = v}\)\\
+ &  & \\
+\(T\) & ::= & \(\dots \mid \var{\type{\ell_i}{T_i}^{\quad i\in 1\dots n}}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Axioms}
+\label{sec:orgf6c0af2}
+\[\infer{\match{\var{\ell_j =
+    v_j}}{\case{\ell_i}{x_i}{M_i}^{\quad i \in 1\dots n}}\to
+    M_j\subs{x_j}{v_j}}{\text{(MATCH)}}\]
+\subsubsection*{Rules}
+\label{sec:org3de8fb5}
+\begin{itemize}
+\item (RED-MATCH) \[\infer{\match{M}{\case{\ell_i}{x_i}{M_i}^{\quad i
+      \in 1\dots n}}\to \match{M'}{\case{\ell_i}{x_i}{M_i}^{\quad i
+      \in 1\dots n}} }{M\to M'}\]
+\item (VARIANT) \[\infer{\var{\ell = M} \to \var{\ell = M'}}{M\to
+      M'}\]
+\end{itemize}
+\subsubsection*{Typing rules}
+\label{sec:org9a9f59a}
+\begin{itemize}
+\item (TYPE-VARIANT) \[\infer[j\in 1 \dots n]{\Gamma \vdash
+      \type{\var{\ell_j = M}}{\var{\type{\ell_i}{T_i}^{\quad i \in 1
+      \dots n}}}}{\Gamma \vdash \type{M}{T_j}}\]
+\item (TYPE-MATCH)
+\[\infer{\Gamma\vdash\match{M}{\case{\ell_i}{x_i}{M_i}^{\quad i
+      \in 1\dots n}}}{\Gamma\vdash
+      \type{M}{\var{\type{\ell_i}{T_i}^{i\in 1\dots n}}} & \forall i
+      \in 1 \dots n\quad \Gamma, \type{x_i}{T_i}\vdash
+      \type{M_i}{T}}\]
+\end{itemize}
+
+\subsection*{Subtyping}
+\label{sec:org94436cc}
+No terms, values or types are added, justo new rules to embed the
+concept of \emph{subtyping}
+\subsubsection*{Axioms}
+\label{sec:org9436b20}
+(REFLEX) \[\infer{\subt{T}{T}}{}\]
+\subsubsection*{Rules}
+\label{sec:org32d7f76}
+The main rule added is (SUBSUMPTION), it allows for generic
+subtyping. Attention! with this rule we loss the unicity of
+typing!
+
+\begin{center}
+\begin{tabular}{ll}
+\(\inferr{SUBSUMPTION}{\Gamma\vdash \type{M}{T}}{\Gamma \vdash \type{M}{T} & \subt{S}{T}}\) & \(\inferr{TRANS}{\subt{S}{T}}{\subt{S}{U} & \subt{U}{T}}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Record-sepcific rules}
+\label{sec:org4152d5e}
+We're introducing record-specific rules, since is the data
+structures which allows us to encode sort of \emph{objects} into our
+language
+
+\begin{itemize}
+\item (SUB-WIDTH) \[\infer{\subt{\rec{\type{\ell_i}{T_i}^{\quad i \in
+      I\cup I'}}}{\rec{\type{\ell_i}{T_i}^{\quad i \in I}}}}{}\]
+\item (SUB-DEPTH) \[\infer{ \subt{ \rec{ \type{\ell_i}{S_i}^{\quad i
+      \in I}}}{\rec{\type{\ell_i}{T_i}^{\quad i \in I}}}}
+      {\subt{S_i}{T_i}\quad \forall i \in I}\]
+\end{itemize}
+\subsection*{Exceptions}
+\label{sec:org07a8be7}
+\begin{center}
+\begin{tabular}{lcl}
+\(M\) & ::= & \(\dots \mid \throw{M} \mid \tc{M_1}{M_2}\)\\
+\end{tabular}
+
+\end{center}
+
+\subsubsection*{Axioms}
+\label{sec:org95db2da}
+\begin{itemize}
+\item (TRY-VAL) \[\infer{\tc{v}{M}\to v}{}\]
+\item (RAISE-2) \[\infer{\throw{\throw{v}} \to v}{}\]
+\item (RIASE APP 1) \[\infer{\app{\throw{v}}{M} \to \throw{v}}{}\]
+\item (RIASE APP 2) \[\infer{\app{v_1}{\throw{v_2}} \to
+      \throw{v_2}}{}\]
+\item (RIASE IF-THEN-ELSE) \[\infer{\ifc{\throw{v}}{M}{N}\to
+      \throw{v}}{}\]
+\item (RAISE SUM 1) \[\infer{\throw{v} + M \to \throw{v}}{}\]
+\item (RAISE SUM 2) \[\infer{v_1 + \throw{v_2} \to \throw{v_2}}{}\]
+\end{itemize}
+\subsubsection*{Rules}
+\label{sec:org4bc0b88}
+\begin{itemize}
+\item (TRY) \[\infer{\tc{M}{N} \to \tc{M'}{N}}{M\to M'}\]
+\item (RAISE 1) \[\infer{\throw{M} \to \throw{M'}}{M\to M'}\]
+\end{itemize}
+\subsubsection*{Typing rules}
+\label{sec:org568c11d}
+\begin{itemize}
+\item (T RAISE) \[\infer{\Gamma\vdash \type{\throw{M}}{T}}
+      {\Gamma\vdash \type{M}{T_{exn}}}\]
+\item (T RAISE)
+\[\infer{\Gamma\vdash\type{\tc{M}{N}}{T}}{\Gamma\vdash\type{M}{T}
+      & \Gamma\vdash \type{N}{(T_{exn}\to T)}}\]
+\end{itemize}
+\subsection*{Featherweight Java}
+\label{sec:orgb3c980b}
+\begin{center}
+\begin{tabular}{rcl}
+Class declaration CL & ::= & class C extends D \{ A\textasciitilde{} f; K M\textasciitilde{} \}\\
+ &  & \\
+Constructor Declaration K & ::= & C(A\textasciitilde{} g, B\textasciitilde{} f) \{ super(\(g~\)); this.f\textasciitilde{} = f\textasciitilde{} \}\\
+ &  & \\
+Method Declaration M & ::= & C m(A\textasciitilde{} x) \{ return t; \}\\
+\end{tabular}
+
+\end{center}
+
+\begin{center}
+\begin{tabular}{rcllr}
+Terms \(t\) & ::= & x & variables & \\
+ &  & \(t\).f & field selection & \\
+ &  & \(t\).m(t*) & method invocation & Values \(u,v ::=\) new C(\(v\))\\
+ &  & new C(t*) & object creation & \\
+ &  & \((C)t\) & cast & \\
+\end{tabular}
+
+\end{center}
+\end{document}
