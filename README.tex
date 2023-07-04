@@ -501,7 +501,7 @@ with \(j \in \{1, \dots, n\}\)
 
 \subsection*{Subtyping}
 \label{sec:org94436cc}
-No terms, values or types are added, justo new rules to embed the
+No terms, values or types are added, just two new rules to embed the
 concept of \emph{subtyping}
 \subsubsection*{Axioms}
 \label{sec:org9436b20}
@@ -546,10 +546,10 @@ language
 \begin{itemize}
 \item (TRY-VAL) \[\infer{\tc{v}{M}\to v}{}\]
 \item (RAISE-2) \[\infer{\throw{\throw{v}} \to v}{}\]
-\item (RIASE APP 1) \[\infer{\app{\throw{v}}{M} \to \throw{v}}{}\]
-\item (RIASE APP 2) \[\infer{\app{v_1}{\throw{v_2}} \to
+\item (RAISE APP 1) \[\infer{\app{\throw{v}}{M} \to \throw{v}}{}\]
+\item (RAISE APP 2) \[\infer{\app{v_1}{\throw{v_2}} \to
       \throw{v_2}}{}\]
-\item (RIASE IF-THEN-ELSE) \[\infer{\ifc{\throw{v}}{M}{N}\to
+\item (RAISE IF-THEN-ELSE) \[\infer{\ifc{\throw{v}}{M}{N}\to
       \throw{v}}{}\]
 \item (RAISE SUM 1) \[\infer{\throw{v} + M \to \throw{v}}{}\]
 \item (RAISE SUM 2) \[\infer{v_1 + \throw{v_2} \to \throw{v_2}}{}\]
